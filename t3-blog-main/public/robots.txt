@@ -1,0 +1,11 @@
+User-agent: Googlebot
+Disallow: /auth/signin/
+Disallow: /auth/signout/
+Disallow: /auth/verify-request/
+Disallow: /auth/error/
+Disallow: /posts/new/
+Disallow: /posts/liked/
+Disallow: /posts/following/
+
+User-agent: *
+Allow: /

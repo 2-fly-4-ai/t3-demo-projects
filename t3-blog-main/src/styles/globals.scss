@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// Global styles.
+button {
+  cursor: pointer;
+}
+
+::selection {
+  @apply bg-blue-500 text-white;
+}
+
+html {
+  @apply base-scrollbar scrollbar-thumb-emerald-600/70;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  filter: opacity(0.6);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  @apply font-inter;
+}
+
+pre * {
+  @apply font-mono;
+}
+
+/* 
+  From here forwards we have specific style adjustments being applied, like:
+    1. Changes to the default markdown editor styles. (Add dark mode, change text style)
+    2. Style fixes and adjustments for other libraries.
+
+*/
+
+// Fix keen-slider initial layout shift.
+.keen-slider:not(.initialized) {
+  gap: 15px;
+}
+
+// Change react-toastify info color.
+:root {
+  --toastify-color-info: theme("colors.emerald.600") !important;
+}
+
+.rc-md-navigation {
+  @apply rounded-t-[20px];
+}
+
+// MD Editor styling adjustments.
+.rc-md-editor {
+  width: 100%;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+
+  @apply dark:border-neutral-800;
+
+  .sec-html {
+    border: none !important;
+  }
+
+  .sec-md textarea {
+    overflow-y: auto !important;
+  }
+}
+
+// Create new tailwind class for MD editor dark-mode styles.
+@layer utilities {
+  .base-scrollbar {
+    @apply scrollbar-thin scrollbar-track-transparent dark:scrollbar-track-transparent;
+  }
+
+  .grey-scrollbar {
+    @apply base-scrollbar scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-800;
+  }
+
+  .content-mask {
+    -webkit-mask-image: linear-gradient(180deg, #000 71%, transparent);
+    mask-image: linear-gradient(180deg, #000 71%, transparent);
+  }
+
+  .md-dark-mode {
+    @apply bg-zinc-900;
+
+    .editor-container {
+      .sec-md {
+        @apply border-r border-neutral-800;
+
+        @media (max-width: 425px) {
+          @apply border-b border-neutral-800;
+        }
+      }
+
+      .sec-md textarea {
+        @apply bg-zinc-900 text-neutral-100;
+      }
+    }
+
+    .rc-md-navigation {
+      @apply border-none bg-zinc-800 text-zinc-100;
+
+      .button:hover {
+        color: theme("colors.neutral.300") !important;
+      }
+    }
+  }
+}
+
+// Apply prose to MD editor html preview.
+.editor-container .html-section {
+  @apply prose prose-emerald dark:prose-invert -xl:prose-sm;
+}
+
+// Apply styles to router progress bar.
+#nprogress .bar {
+  background: theme("colors.emerald.500") !important;
+  height: 3px !important;
+}
+
+// Remove exaggerated margin from checklist.
+.prose {
+  input[type="checkbox"] {
+    @apply mb-0 mt-0;
+  }
+}
