@@ -1,0 +1,223 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // NOTE: When using postgresql, mysql or sqlserver, uncomment the @db.Text annotations in model Account below
+  // Further reading:
+  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+  url      = env("DATABASE_URL")
+}
+
+// model Example {
+//   id        String   @id @default(cuid())
+//   createdAt DateTime @default(now())
+//   updatedAt DateTime @updatedAt
+// }
+
+// Necessary for Next auth
+model Account {
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? // @db.Text
+  access_token       String? // @db.Text
+  oauth_token        String?
+  oauth_token_secret String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? // @db.Text
+  session_state      String?
+  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String     @id @default(uuid())
+  name          String?
+  email         String?    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  tweets        Tweet[]
+  createdAt     DateTime   @default(now())
+  // replies       Reply[]
+  followers     Follows[]  @relation("follower")
+  followings    Follows[]  @relation("following")
+  likes         Like[]
+  profile       Profile?
+  bookmarks     Bookmark[]
+  handle        String?    @unique
+  listFollowing List[]     @relation("followers")
+  listMember    List[]     @relation("members")
+  lists         List[]
+  isVerified    Boolean?   @default(false)
+
+  option           Option?        @relation("votes", fields: [optionId], references: [id])
+  optionId         String?
+  notification     Notification[] @relation("sender")
+  notificationSent Notification[] @relation("recipient")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  tweet     Tweet    @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+  tweetId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, tweetId])
+}
+
+model Follows {
+  follower    User     @relation("follower", fields: [followerId], references: [id])
+  followerId  String
+  followingId String
+  following   User     @relation("following", fields: [followingId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@id([followerId, followingId])
+}
+
+model Hashtag {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  tweets    Tweet[]
+}
+
+model Tweet {
+  id              String     @id @default(uuid())
+  createdAt       DateTime   @default(now())
+  text            String?
+  userId          String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  image           String?
+  originalTweet   Tweet?     @relation("replies", fields: [originalTweetId], references: [id], onDelete: Cascade)
+  originalTweetId String?
+  replies         Tweet[]    @relation("replies")
+  hashtags        Hashtag[]
+  likes           Like[]
+  bookmarks       Bookmark[]
+  retweet         Tweet?     @relation("retweets", fields: [retweetId], references: [id], onDelete: Cascade)
+  retweetId       String?
+  retweets        Tweet[]    @relation("retweets")
+  isPinned        Boolean
+  poll            Poll?      @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId          String?    @unique
+
+  @@unique([id, userId])
+  @@unique([retweetId, userId])
+}
+
+model Poll {
+  id        String    @id @default(uuid())
+  expiredAt DateTime?
+
+  options Option[]
+
+  tweet Tweet?
+}
+
+model Option {
+  id     String @id @default(uuid())
+  text   String
+  votes  User[] @relation("votes")
+  poll   Poll   @relation(fields: [pollId], references: [id],onDelete: Cascade)
+  pollId String
+}
+
+model Profile {
+  id         String  @id @default(uuid())
+  bio        String?
+  user       User    @relation(fields: [userId], references: [id])
+  userId     String  @unique
+  location   String?
+  website    String?
+  coverPhoto String?
+}
+
+model Bookmark {
+  id      String @id @default(uuid())
+  user    User   @relation(fields: [userId], references: [id])
+  userId  String
+  tweetId String
+  tweet   Tweet  @relation(fields: [tweetId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tweetId])
+}
+
+model List {
+  id          String  @id @default(uuid())
+  creator     User    @relation(fields: [creatorId], references: [id])
+  creatorId   String
+  members     User[]  @relation("members")
+  followers   User[]  @relation("followers")
+  name        String
+  description String?
+  isPrivate   Boolean @default(false)
+  coverPhoto  String?
+
+  @@unique([id, creatorId])
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  createdAt   DateTime @default(now())
+  sender      User     @relation("sender", fields: [senderId], references: [id])
+  recipient   User     @relation("recipient", fields: [recipientId], references: [id])
+  text        String
+  redirectUrl String
+  senderId    String
+  recipientId String
+}
+
+// model Retweet {
+//   id      String @id @default(uuid())
+//   user    User   @relation(fields: [userId], references: [id])
+//   userId  String
+//   tweetId String 
+//   tweet   Tweet  @relation(fields: [tweetId], references: [id])
+
+//   @@unique([userId,tweetId])
+// }
+
+// model Reply {
+//   id        String   @id @default(uuid())
+//   createdAt DateTime @default(now())
+//   text      String?
+//   userId    String
+//   user      User     @relation(fields: [userId], references: [id])
+//   image     String?
+//   tweetId   String
+//   tweet     Tweet @relation(fields: [tweetId],references: [id])
+
+//   @@index([userId])
+// }
